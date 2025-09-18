@@ -1,0 +1,44 @@
+# 工作流名称
+name: Deploy Frontend to GitHub Pages
+
+# 触发条件：当代码被推送到 main 分支时
+on:
+  push:
+    branches: [ "main" ]
+
+# 作业配置
+jobs:
+  # 单个作业，用于构建和部署前端
+  deploy:
+    runs-on: ubuntu-latest
+
+    # 授予工作流写入内容的权限，以便部署
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+
+    steps:
+      # 步骤 1: 检出代码
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 步骤 2: 设置 GitHub Pages
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      # 步骤 3: 从 'frontend' 目录构建静态文件产物
+      # 注意：GitHub Pages 的默认构建逻辑有时需要一个空的 .nojekyll 文件来处理纯 HTML/JS/CSS 网站
+      - name: Create .nojekyll file
+        run: touch frontend/.nojekyll
+
+      # 步骤 4: 指定上传源并上传构建产物
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./frontend # 指定我们的前端代码目录
+
+      # 步骤 5: 部署到 GitHub Pages
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
