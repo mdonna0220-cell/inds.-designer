@@ -40,11 +40,10 @@ jobs:
         name: 'Deploy Cloud Function'
         uses: 'google-github-actions/deploy-cloud-functions@v2'
         with:
-          name: 'ai-design-proxy' # 您的云函数名称
+          name: 'ai-design-proxy'
           runtime: 'nodejs18'
           source_dir: ./backend
-          entry_point: 'handler' # 对应 backend/index.js 中导出的函数
-          # 关键一步：安全地将 API 密钥设置为环境变量
+          entry_point: 'handler'
           env_vars:
             GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
 
