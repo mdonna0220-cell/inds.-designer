@@ -40,6 +40,8 @@ jobs:
         name: 'Deploy Cloud Function'
         uses: 'google-github-actions/deploy-cloud-functions@v2'
         with:
+          project_id: ${{ vars.GCP_PROJECT_ID }}
+          region: ${{ vars.GCP_REGION }}
           name: 'ai-design-proxy'
           runtime: 'nodejs18'
           source_dir: ./backend
