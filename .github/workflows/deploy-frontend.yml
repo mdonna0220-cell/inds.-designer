@@ -1,44 +1,51 @@
-# 工作流名称
-name: Deploy Frontend to GitHub Pages
+# .github/workflows/deploy.yml
 
-# 触发条件：当代码被推送到 main 分支时
+name: Deploy AI Interior Designer
+
 on:
   push:
     branches: [ "main" ]
 
-# 作业配置
 jobs:
-  # 单个作业，用于构建和部署前端
-  deploy:
+  # 作业 1: 部署前端 (之前已配置)
+  deploy-frontend:
     runs-on: ubuntu-latest
-
-    # 授予工作流写入内容的权限，以便部署
     permissions:
       contents: read
       pages: write
       id-token: write
-
     steps:
-      # 步骤 1: 检出代码
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      # 步骤 2: 设置 GitHub Pages
-      - name: Setup Pages
-        uses: actions/configure-pages@v5
-
-      # 步骤 3: 从 'frontend' 目录构建静态文件产物
-      # 注意：GitHub Pages 的默认构建逻辑有时需要一个空的 .nojekyll 文件来处理纯 HTML/JS/CSS 网站
-      - name: Create .nojekyll file
-        run: touch frontend/.nojekyll
-
-      # 步骤 4: 指定上传源并上传构建产物
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+      - uses: actions/checkout@v4
+      - uses: actions/configure-pages@v5
+      - run: touch frontend/.nojekyll
+      - uses: actions/upload-pages-artifact@v3
         with:
-          path: ./frontend # 指定我们的前端代码目录
+          path: ./frontend
+      - uses: actions/deploy-pages@v4
 
-      # 步骤 5: 部署到 GitHub Pages
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+  # 作业 2: 新增 - 部署后端代理
+  deploy-backend-proxy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+      - id: 'auth'
+        name: 'Authenticate to Google Cloud'
+        uses: 'google-github-actions/auth@v2'
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+      - id: 'deploy'
+        name: 'Deploy Cloud Function'
+        uses: 'google-github-actions/deploy-cloud-functions@v2'
+        with:
+          name: 'ai-design-proxy' # 您的云函数名称
+          runtime: 'nodejs18'
+          source_dir: ./backend
+          entry_point: 'handler' # 对应 backend/index.js 中导出的函数
+          # 关键一步：安全地将 API 密钥设置为环境变量
+          env_vars:
+            GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
